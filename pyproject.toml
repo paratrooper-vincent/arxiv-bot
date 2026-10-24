@@ -1,0 +1,14 @@
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+include = ["arxiv_bot/**/*.py", "tests/**/*.py", "run_bot.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = [
+    "E501",  # 长行由 format 控制；中文注释字符宽，偶尔超长可接受
+    "UP006", "UP007", "UP035", "UP045",  # 保持 typing.List/Optional 写法，兼容 Python 3.9 运行时
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

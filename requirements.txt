@@ -1,0 +1,10 @@
+# arxiv-bot 运行依赖（Python 3.9+）
+requests>=2.27
+feedparser>=6.0
+python-dotenv>=1.0
+pydantic>=2.6
+pydantic-settings>=2.2
+numpy>=1.24
+# 仪表盘（P1）
+fastapi>=0.110
+uvicorn>=0.29

@@ -1,0 +1,26 @@
+{
+  "research_focus": "机器人仿生学：仿生机构、软体机器人、生物启发感知与驱动",
+  "categories": ["cs.RO"],
+  "keywords": ["robot", "bionic", "biomimetic", "bio-inspired", "bioinspired", "soft robot", "soft robotics"],
+  "fetch_count": 100,
+  "max_push": 10,
+  "semantic": {
+    "enabled": true,
+    "backend": "auto",
+    "top_k": 15,
+    "min_score": 0.35
+  },
+  "llm": {
+    "enabled": true,
+    "top_k": 8
+  },
+  "alert": {
+    "consecutive_failures": 3
+  },
+  "sources": {
+    "arxiv": { "enabled": true },
+    "semantic_scholar": { "enabled": true, "limit": 20 },
+    "github_trending": { "enabled": true, "topic": "robotics", "limit": 10 },
+    "rss": { "enabled": false, "urls": ["https://rss.arxiv.org/rss/cs.RO"] }
+  }
+}

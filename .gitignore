@@ -1,0 +1,28 @@
+# ===== 密钥与本地配置（绝不入库） =====
+.env
+# 本机误下载的安装包等大文件
+*.exe
+
+# ===== 本地真实业务配置与运行数据 =====
+config.json
+seen.json
+run.log
+data/
+logs/
+
+# ===== Python =====
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+
+# ===== 编辑器 / 系统 =====
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

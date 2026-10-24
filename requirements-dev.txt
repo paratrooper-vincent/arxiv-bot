@@ -1,0 +1,5 @@
+# 开发与测试依赖
+-r requirements.txt
+pytest>=8.0
+ruff>=0.4
+httpx>=0.27
