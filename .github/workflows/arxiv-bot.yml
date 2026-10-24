@@ -37,6 +37,8 @@ jobs:
           python-version: "3.11"
           cache: pip
       - run: pip install -r requirements.txt
+      # 云端是全新环境，gitignore 掉的 config.json 不在仓库里，从模板生成一份
+      - run: cp config.example.json config.json
       - name: 每日抓取与推送
         env:
           FEISHU_WEBHOOK: ${{ secrets.FEISHU_WEBHOOK }}
@@ -58,6 +60,8 @@ jobs:
           python-version: "3.11"
           cache: pip
       - run: pip install -r requirements.txt
+      # 云端是全新环境，gitignore 掉的 config.json 不在仓库里，从模板生成一份
+      - run: cp config.example.json config.json
       - name: 每周汇总推送
         env:
           FEISHU_WEBHOOK: ${{ secrets.FEISHU_WEBHOOK }}
