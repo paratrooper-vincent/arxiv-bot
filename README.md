@@ -136,8 +136,8 @@ ruff check .         # 静态检查
 
 | 方式 | 适用 | 说明 |
 |---|---|---|
-| **Windows 任务计划程序（推荐主力）** | 本机常开 | 每日 08:00 `run_bot.py run`、周一 08:30 `weekly`；已配置"电池可运行/错过补跑/唤醒"。设置步骤见 `docs/GITHUB_SETUP.md` |
-| **GitHub Actions（云端备份）** | 电脑不常开 | `.github/workflows/arxiv-bot.yml`，cron 为 **UTC**（北京 08:00 = `0 0 * * *`）；密钥走 Secrets；注意云端无状态、去重有限 |
+| **Windows 任务计划程序（主力，当前启用）** | 本机常开 | 每日 08:00 `run_bot.py run`、周一 08:30 `weekly`；已配置"电池可运行/错过补跑/唤醒" |
+| **GitHub Actions（手动备用，定时默认关闭）** | 电脑不常开/外出时 | `.github/workflows/arxiv-bot.yml` 只保留 Run workflow 手动触发；想改云端定时就取消 schedule 注释并禁用本地任务（cron 为 **UTC**，北京 08:00 = `0 0 * * *`）；密钥走 Secrets；云端无状态、与本地可能有少量重复 |
 | 云服务器 / 云函数 | 进阶 | 一台常驻小主机（或函数计算 + 定时器）拉取本仓库执行 `python -m arxiv_bot run` 即可，密钥用平台环境变量注入 |
 
 ## 技术栈
