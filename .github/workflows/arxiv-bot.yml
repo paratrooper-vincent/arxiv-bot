@@ -1,0 +1,68 @@
+# arxiv-bot 定时任务（GitHub Actions 云端方案）
+#
+# 说明：
+# 1. cron 用的是 UTC 时间！北京 08:00 = UTC 00:00（下式 "0 0 * * *"）。
+# 2. 所有密钥从仓库 Secrets 注入（Settings -> Secrets and variables -> Actions）：
+#    - FEISHU_WEBHOOK  必填（飞书机器人地址）
+#    - LLM_API_KEY / LLM_BASE_URL / LLM_MODEL  选填（配了才有 LLM 点评与 AI 周报）
+# 3. 注意：Actions 每次运行都是全新环境，SQLite 去重状态不保留——
+#    每天新论文本身不重复，影响不大；若与本地任务同时启用，请只保留一边，
+#    或接受少量重复推送。本地 Windows 任务计划程序方案见 README（推荐为主力）。
+# 4. 手动触发：Actions 页面选本工作流 -> Run workflow，可选执行 run 或 weekly。
+
+name: arxiv-bot
+
+on:
+  schedule:
+    - cron: "0 0 * * *"    # 每天 UTC 00:00 = 北京 08:00 抓推
+    - cron: "30 0 * * 1"   # 每周一 UTC 00:30 = 北京 08:30 周报
+  workflow_dispatch:
+    inputs:
+      task:
+        description: "要执行的任务"
+        required: false
+        default: "run"
+        type: choice
+        options: [run, weekly]
+
+jobs:
+  daily:
+    # 每日定时触发，或手动选了 run
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '0 0 * * *'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: 每日抓取与推送
+        env:
+          FEISHU_WEBHOOK: ${{ secrets.FEISHU_WEBHOOK }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          LLM_BASE_URL: ${{ secrets.LLM_BASE_URL }}
+          LLM_MODEL: ${{ secrets.LLM_MODEL }}
+        run: python -m arxiv_bot run
+        # 手动选 weekly 时本 job 跳过实际执行
+        if: github.event_name != 'workflow_dispatch' || github.event.inputs.task == 'run'
+
+  weekly:
+    # 周一定时触发，或手动选了 weekly
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '30 0 * * 1'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: 每周汇总推送
+        env:
+          FEISHU_WEBHOOK: ${{ secrets.FEISHU_WEBHOOK }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+          LLM_BASE_URL: ${{ secrets.LLM_BASE_URL }}
+          LLM_MODEL: ${{ secrets.LLM_MODEL }}
+        run: python -m arxiv_bot weekly
+        if: github.event_name != 'workflow_dispatch' || github.event.inputs.task == 'weekly'

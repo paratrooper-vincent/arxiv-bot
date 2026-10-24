@@ -75,11 +75,19 @@ class RSSSourceConfig(BaseModel):
     urls: List[str] = []
 
 
+class PapersWithCodeSourceConfig(BaseModel):
+    """PwC 官方 API 已不稳定，默认关闭（详见 sources/papers_with_code.py 说明）。"""
+
+    enabled: bool = False
+    limit: int = Field(20, gt=0, le=50)
+
+
 class SourcesConfig(BaseModel):
     arxiv: ArxivSourceConfig = ArxivSourceConfig()
     semantic_scholar: SemanticScholarSourceConfig = SemanticScholarSourceConfig()
     github_trending: GitHubTrendingSourceConfig = GitHubTrendingSourceConfig()
     rss: RSSSourceConfig = RSSSourceConfig()
+    papers_with_code: PapersWithCodeSourceConfig = PapersWithCodeSourceConfig()
 
 
 class AppConfig(BaseModel):

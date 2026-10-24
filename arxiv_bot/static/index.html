@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>arxiv-bot 仪表盘</title>
+<script src="/static/echarts.min.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Microsoft YaHei", system-ui, sans-serif; background: #f4f6f9; color: #2c3e50; }
+  header { background: #1f2d3d; color: #fff; padding: 18px 28px; }
+  header h1 { font-size: 20px; font-weight: 600; }
+  header p { font-size: 12px; opacity: .7; margin-top: 4px; }
+  .wrap { max-width: 1100px; margin: 0 auto; padding: 20px; }
+  .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
+  .card { background: #fff; border-radius: 10px; padding: 16px 20px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  .card .num { font-size: 30px; font-weight: 700; margin-top: 6px; }
+  .card .label { font-size: 13px; color: #8492a6; }
+  .card .sub { font-size: 12px; color: #b2bfcf; margin-top: 2px; }
+  .charts { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-top: 14px; }
+  .chart-box { background: #fff; border-radius: 10px; padding: 14px; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  .chart-box h3 { font-size: 14px; margin-bottom: 8px; color: #5e6d82; }
+  #bar, #pie { width: 100%; height: 260px; }
+  table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 10px; overflow: hidden;
+          box-shadow: 0 1px 4px rgba(0,0,0,.06); font-size: 13px; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid #eef1f6; }
+  th { background: #f8fafc; color: #5e6d82; font-weight: 600; }
+  td a { color: #3b83e8; text-decoration: none; }
+  td a:hover { text-decoration: underline; }
+  .tag { display: inline-block; padding: 1px 8px; border-radius: 10px; font-size: 12px; }
+  .tag.pushed { background: #e6f7e9; color: #2e7d32; }
+  .tag.new { background: #fff7e0; color: #b8860b; }
+  .toolbar { display: flex; gap: 10px; margin: 18px 0 10px; }
+  .toolbar input, .toolbar select { padding: 7px 10px; border: 1px solid #d7dce4; border-radius: 7px; font-size: 13px; }
+  .toolbar input { flex: 1; }
+  @media (max-width: 760px) { .charts { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<header>
+  <h1>📚 arxiv-bot 论文情报仪表盘</h1>
+  <p>数据来源：arXiv / Semantic Scholar / GitHub Trending · 数据库 data/arxiv.db</p>
+</header>
+<div class="wrap">
+  <div class="cards" id="cards"></div>
+  <div class="charts">
+    <div class="chart-box"><h3>近 14 天推送量</h3><div id="bar"></div></div>
+    <div class="chart-box"><h3>来源分布</h3><div id="pie"></div></div>
+  </div>
+  <div class="toolbar">
+    <input id="q" placeholder="全文检索标题/摘要，如 soft robot，回车搜索">
+    <select id="status">
+      <option value="">全部状态</option>
+      <option value="pushed">已推送</option>
+      <option value="new">待推送</option>
+    </select>
+  </div>
+  <table>
+    <thead><tr><th>日期</th><th>标题</th><th>来源</th><th>评分</th><th>命中</th><th>状态</th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+</div>
+<script>
+const $ = (s) => document.querySelector(s);
+
+async function loadSummary() {
+  const s = await (await fetch('/api/summary')).json();
+  const rate = s.success_rate === null ? '—' : (s.success_rate * 100).toFixed(0) + '%';
+  const fail = s.consecutive_failures > 0 ? `连续失败 ${s.consecutive_failures} 次` : '运行正常';
+  $('#cards').innerHTML = [
+    card('入库论文', s.total, `${s.by_source.arxiv ?? 0} 篇来自 arXiv`),
+    card('已推送', s.pushed, `待推送 ${s.new} 篇`),
+    card('推送成功率', rate, `覆盖 ${s.run_days} 个运行日`),
+    card('健康状态', s.consecutive_failures === 0 ? '✓ 正常' : '⚠ 异常', fail),
+  ].join('');
+  echarts.init($('#bar')).setOption({
+    tooltip: { trigger: 'axis' },
+    grid: { left: 40, top: 20, right: 16, bottom: 26 },
+    xAxis: { type: 'category', data: s.by_day.map(d => d.day).reverse() },
+    yAxis: { type: 'value', minInterval: 1 },
+    series: [{ type: 'bar', itemStyle: { color: '#409eff', borderRadius: [4, 4, 0, 0] },
+               data: s.by_day.map(d => d.count).reverse() }],
+  });
+  echarts.init($('#pie')).setOption({
+    tooltip: { trigger: 'item' },
+    series: [{ type: 'pie', radius: ['38%', '66%'],
+               label: { formatter: '{b}: {c}' },
+               data: Object.entries(s.by_source).map(([name, value]) => ({ name, value })) }],
+  });
+}
+function card(label, num, sub) {
+  return `<div class="card"><div class="label">${label}</div><div class="num">${num}</div><div class="sub">${sub}</div></div>`;
+}
+
+async function loadPapers() {
+  const q = $('#q').value.trim();
+  const status = $('#status').value;
+  const url = q ? `/api/papers?q=${encodeURIComponent(q)}&limit=50`
+                : `/api/papers?limit=50${status ? '&status=' + status : ''}`;
+  const { items } = await (await fetch(url)).json();
+  $('#rows').innerHTML = items.map(p => `
+    <tr>
+      <td>${(p.pushed_at || p.created_at || '').slice(0, 10)}</td>
+      <td><a href="${p.link}" target="_blank">${p.title}</a></td>
+      <td>${p.source}</td>
+      <td>${p.relevance_score == null ? '—' : Number(p.relevance_score).toFixed(2)}</td>
+      <td>${p.matched_rule || '—'}</td>
+      <td><span class="tag ${p.status}">${p.status === 'pushed' ? '已推送' : '待推送'}</span></td>
+    </tr>`).join('') || '<tr><td colspan="6" style="text-align:center;color:#8492a6">没有数据</td></tr>';
+}
+
+$('#q').addEventListener('keydown', e => { if (e.key === 'Enter') loadPapers(); });
+$('#status').addEventListener('change', loadPapers);
+loadSummary();
+loadPapers();
+</script>
+</body>
+</html>

@@ -12,11 +12,11 @@ from typing import List, Optional
 
 from . import notifier
 from .config import DATA_DIR, PROJECT_ROOT, AppConfig, Secrets, load_config, load_secrets
-from .fetcher import fetch_arxiv
 from .filter import rank_papers
 from .llm import review_paper
 from .models import ScoredPaper
 from .semantic import SemanticEngine
+from .sources import collect_papers
 from .storage import Storage
 
 logger = logging.getLogger(__name__)
@@ -59,12 +59,8 @@ def run_daily(
     storage = storage or open_storage()
     storage.import_legacy_seen(PROJECT_ROOT / "seen.json")
 
-    # ---- 1. 抓取（P1 起此处聚合多数据源，单源失败只记日志不中断） ----
-    papers = []
-    try:
-        papers.extend(fetch_arxiv(cfg))
-    except Exception as e:  # noqa: BLE001
-        logger.error("arXiv 抓取失败：%s", e)
+    # ---- 1. 多源聚合抓取（单源失败只记日志不中断，跨源自动去重） ----
+    papers = collect_papers(cfg)
     if not papers:
         raise RuntimeError("没有抓到任何论文（所有数据源失败）")
 

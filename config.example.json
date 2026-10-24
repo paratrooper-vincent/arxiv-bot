@@ -21,6 +21,7 @@
     "arxiv": { "enabled": true },
     "semantic_scholar": { "enabled": true, "limit": 20 },
     "github_trending": { "enabled": true, "topic": "robotics", "limit": 10 },
-    "rss": { "enabled": false, "urls": ["https://rss.arxiv.org/rss/cs.RO"] }
+    "rss": { "enabled": false, "urls": ["https://rss.arxiv.org/rss/cs.RO"] },
+    "papers_with_code": { "enabled": false, "limit": 20 }
   }
 }
