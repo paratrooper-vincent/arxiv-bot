@@ -1,10 +1,8 @@
 # arxiv-bot 📚
 
-<!-- 徽章占位：GitHub 建仓后取消注释并替换 OWNER/REPO
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
 ![License](https://img.shields.io/badge/License-MIT-green)
 ![Tests](https://img.shields.io/badge/tests-35%20passed-brightgreen)
--->
 
 > 一句话：**多源论文情报推送机器人**——定时抓取 arXiv / Semantic Scholar / GitHub Trending，用「关键词 + 语义 + LLM」三层筛选，把真正相关的新论文用飞书消息卡片推给你，并沉淀为可全文检索的本地知识库。
 
